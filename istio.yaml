@@ -1,0 +1,49 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: backend-gateway
+  namespace: library-ns
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: library-ns
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - backend-gateway
+  http:
+  - match:
+    - headers:
+        user-agent:
+          regex: ".*Chrome.*"
+    route:
+    - destination:
+        host: catalog-backend-service-1.library-ns.svc.cluster.local
+        port:
+          number: 8081
+      headers:
+        response:
+          add:
+            x-backend: "backend-1"
+  - route:
+    - destination:
+        host: catalog-backend-service-2.library-ns.svc.cluster.local
+        port:
+          number: 8081
+      headers:
+        response:
+          add:
+            x-backend: "backend-2"
